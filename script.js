@@ -41,6 +41,87 @@ function initializeSlider() {
     
     // Initialize first slide
     showSlide(0);
+    
+    // Initialize touch controls for mobile
+    initializeTouchControls();
+}
+
+// Touch controls for mobile slider
+function initializeTouchControls() {
+    const heroSlider = document.querySelector('.hero-slider');
+    if (!heroSlider) return;
+    
+    let startX = 0;
+    let startY = 0;
+    let endX = 0;
+    let endY = 0;
+    let isScrolling = false;
+    
+    // Touch start
+    heroSlider.addEventListener('touchstart', function(e) {
+        startX = e.touches[0].clientX;
+        startY = e.touches[0].clientY;
+        isScrolling = false;
+        
+        // Stop auto slide when user touches
+        stopAutoSlide();
+    }, { passive: true });
+    
+    // Touch move - determine if user is scrolling vertically
+    heroSlider.addEventListener('touchmove', function(e) {
+        if (!startX || !startY) return;
+        
+        const currentX = e.touches[0].clientX;
+        const currentY = e.touches[0].clientY;
+        
+        const diffX = Math.abs(currentX - startX);
+        const diffY = Math.abs(currentY - startY);
+        
+        // If vertical movement is greater than horizontal, user is scrolling
+        if (diffY > diffX) {
+            isScrolling = true;
+        }
+        
+        // If horizontal swipe is detected and not scrolling, prevent default
+        if (diffX > diffY && diffX > 10) {
+            e.preventDefault();
+        }
+    }, { passive: false });
+    
+    // Touch end - handle swipe
+    heroSlider.addEventListener('touchend', function(e) {
+        if (!startX || !startY || isScrolling) {
+            restartAutoSlide();
+            return;
+        }
+        
+        endX = e.changedTouches[0].clientX;
+        endY = e.changedTouches[0].clientY;
+        
+        const diffX = startX - endX;
+        const diffY = Math.abs(startY - endY);
+        const minSwipeDistance = 50;
+        
+        // Only trigger swipe if horizontal movement is greater than vertical
+        if (Math.abs(diffX) > diffY && Math.abs(diffX) > minSwipeDistance) {
+            if (diffX > 0) {
+                // Swiped left - go to next slide (right direction)
+                changeSlide(1);
+            } else {
+                // Swiped right - go to previous slide (left direction)
+                changeSlide(-1);
+            }
+        }
+        
+        // Reset values
+        startX = 0;
+        startY = 0;
+        endX = 0;
+        endY = 0;
+        
+        // Restart auto slide after touch interaction
+        restartAutoSlide();
+    }, { passive: true });
 }
 
 function startAutoSlide() {
